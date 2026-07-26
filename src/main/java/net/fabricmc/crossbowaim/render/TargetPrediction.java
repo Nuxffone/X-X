@@ -1,0 +1,5 @@
+package net.fabricmc.crossbowaim.render;
+import net.minecraft.world.phys.Vec3;
+public class TargetPrediction{
+public static Vec3 predictTargetPosition(Vec3 targetPos,Vec3 targetVelocity,Vec3 arrowOrigin,double arrowSpeed,int leadTicks){if(leadTicks<=0||targetVelocity.lengthSqr()<0.001)return targetPos;return targetPos.add(targetVelocity.scale(leadTicks));}
+public static Vec3 calculateLaunchAngle(Vec3 arrowOrigin,Vec3 targetPos,double arrowSpeed){Vec3 displacement=targetPos.subtract(arrowOrigin);double horizDist=Math.sqrt(displacement.x*displacement.x+displacement.z*displacement.z);double vertDist=displacement.y;double gravity=0.05;int ticks=(int)(horizDist/arrowSpeed);double adjustedVert=vertDist+0.5*gravity*ticks*ticks;double pitchRad=Math.atan2(adjustedVert,horizDist);double yawRad=Math.atan2(displacement.x,displacement.z);return new Vec3(Math.cos(pitchRad)*Math.sin(yawRad),Math.sin(pitchRad),Math.cos(pitchRad)*Math.cos(yawRad));}}
