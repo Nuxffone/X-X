@@ -1,10 +1,8 @@
-name: Build and Release
+name: Build and Verify
 on:
   push:
     branches: [main]
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,37 +15,28 @@ jobs:
           distribution: temurin
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Build mod
+      - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace
-      - name: Verify JAR contents
+          ./gradlew build --stacktrace 2>&1 | tee build.log
+      - name: Dump JAR contents
         run: |
-          echo "=== Available JARs ==="
-          find build -name "*.jar" -ls
-          JAR=$(find build/libs -name "*.jar" -not -name "*-sources*" -not -name "*-dev*" 2>/dev/null | head -1)
-          if [ -n "$JAR" ]; then
-            echo "=== Mod JAR: $JAR ==="
-            echo "--- Contents: ---"
-            jar tf "$JAR" | sort
-            echo "--- fabric.mod.json: ---"
-            jar xf "$JAR" fabric.mod.json 2>/dev/null && cat fabric.mod.json && echo ""
-            echo "--- CrossbowAimMod.class exists? ---"
-            jar tf "$JAR" | grep CrossbowAimMod || echo "MISSING!"
-          else
-            echo "ERROR: No remapped JAR found in build/libs/"
-            find build -name "*.jar" -ls
-          fi
+          echo "=== Finder ===" && find build -name "*.jar" -ls
+          echo "=== JAR Inspection ==="
+          for f in build/libs/*.jar; do
+            echo "--- $f ---"
+            jar tf "$f" | head -30
+            echo "CrossbowAim in jar:"
+            jar tf "$f" | grep -i crossbow || echo "(not found)"
+          done
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: crossbowaim-jar
           path: build/libs/*.jar
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: build
-          name: Latest Build
-          body: 弩箭预瞄+自动攻击 Fabric mod for MC 26.2
-          files: build/libs/crossbowaim-*.jar
-          prerelease: true
+          name: build-log
+          path: build.log
