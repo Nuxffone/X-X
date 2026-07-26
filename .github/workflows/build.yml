@@ -1,10 +1,11 @@
-name: Build Mod
+name: Build and Release
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,21 +18,34 @@ jobs:
           distribution: temurin
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Build
+      - name: Build mod
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace 2>&1 | tee build.log
-      - name: Show JARs
-        run: find . -name "*.jar" -type f 2>/dev/null || echo "No JARs found"
-      - name: Upload build log
-        if: always()
+          ./gradlew remapJar --stacktrace
+      - name: List JARs
+        run: find build -name "*.jar" -ls
+      - name: Verify mod JAR contents
+        run: |
+          JAR=$(find build/libs -name "*.jar" -not -name "*-sources*" -not -name "*-dev*" | head -1)
+          echo "=== Mod JAR: $JAR ==="
+          jar tf "$JAR" | sort
+          echo "=== fabric.mod.json: ==="
+          jar xf "$JAR" fabric.mod.json && cat fabric.mod.json
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
-      - name: Upload JAR
-        if: always()
-        uses: actions/upload-artifact@v4
+          name: crossbowaim
+          path: build/libs/*.jar
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
         with:
-          name: crossbowaim-jar
-          path: "**/*.jar"
+          tag_name: v1.0.0
+          name: CrossbowAim v1.0.0
+          body: |
+            弩箭预瞄轨迹线与自动攻击模组 for MC 26.2 Fabric
+            - V键：开关弹道预瞄
+            - B键：开关自动攻击
+          files: build/libs/crossbowaim-*.jar
+          draft: false
+          prerelease: false
