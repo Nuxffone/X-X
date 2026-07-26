@@ -1,4 +1,4 @@
-name: Build and Verify
+name: Build
 on:
   push:
     branches: [main]
@@ -13,33 +13,15 @@ jobs:
         with:
           java-version: "21"
           distribution: temurin
-      - name: Setup Gradle
+      - name: Setup Gradle  
         uses: gradle/actions/setup-gradle@v3
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace
-      - name: Dump outputs
-        run: |
-          echo "=== All JARs ==="
-          find build -name "*.jar" -ls
-          echo "=== All files in build/libs ==="
-          ls -la build/libs/ 2>/dev/null || echo "build/libs/ does not exist"
-          echo "=== fabric.mod.json from any JAR ==="
-          for f in build/libs/*.jar  build/libs/*/*.jar; do
-            [ -f "$f" ] || continue
-            echo "--- $(basename $f) ($(wc -c < $f) bytes) ---"
-            if jar tf "$f" | grep -q "fabric.mod.json"; then
-              jar xf "$f" fabric.mod.json 2>/dev/null
-              cat fabric.mod.json 2>/dev/null && echo ""
-              rm fabric.mod.json 2>/dev/null
-            else
-              echo "(no fabric.mod.json)"
-            fi
-          done
-      - name: Upload all JARs
+          ./gradlew build
+      - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
-          name: mod-jar
-          path: build/libs/
-          if-no-files-found: warn
+          name: crossbowaim-mod
+          path: |
+            build/libs/
