@@ -13,8 +13,6 @@ jobs:
         with:
           java-version: "21"
           distribution: temurin
-      - name: Setup Gradle  
-        uses: gradle/actions/setup-gradle@v3
       - name: Build
         run: |
           chmod +x gradlew
@@ -23,5 +21,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: crossbowaim-mod
-          path: |
-            build/libs/
+          path: build/libs/
