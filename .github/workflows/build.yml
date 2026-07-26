@@ -18,25 +18,17 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace 2>&1 | tee build.log
-      - name: Dump JAR contents
+          ./gradlew build --stacktrace
+      - name: List all files
+        run: find build -type f -name "*.jar" -o -name "*.json" | sort
+      - name: Show JAR contents
         run: |
-          echo "=== Finder ===" && find build -name "*.jar" -ls
-          echo "=== JAR Inspection ==="
           for f in build/libs/*.jar; do
-            echo "--- $f ---"
-            jar tf "$f" | head -30
-            echo "CrossbowAim in jar:"
-            jar tf "$f" | grep -i crossbow || echo "(not found)"
+            echo "=== $(basename $f) ($(wc -c < $f) bytes) ==="
+            jar tf "$f" | head -25
           done
-      - name: Upload JAR artifact
+      - name: Upload remapped JAR only
         uses: actions/upload-artifact@v4
         with:
-          name: crossbowaim-jar
-          path: build/libs/*.jar
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+          name: mod-jar
+          path: build/libs/crossbowaim-*.jar
