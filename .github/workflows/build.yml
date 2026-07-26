@@ -16,9 +16,16 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build
-      - name: Upload mod JAR
+          set -o pipefail
+          ./gradlew build --stacktrace 2>&1 | tee build.log
+      - name: Upload JARs
         uses: actions/upload-artifact@v4
         with:
           name: crossbowaim-mod
           path: build/libs/
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
