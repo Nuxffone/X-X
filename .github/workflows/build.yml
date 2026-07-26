@@ -17,19 +17,21 @@ jobs:
           distribution: temurin
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Build with info
+      - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --info --stacktrace 2>&1 | tee build.log
+          ./gradlew build --stacktrace 2>&1 | tee build.log
+      - name: Show JARs
+        run: find . -name "*.jar" -type f 2>/dev/null || echo "No JARs found"
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
           path: build.log
-      - name: Upload artifact
-        if: success()
+      - name: Upload JAR
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: crossbowaim
-          path: build/libs/*.jar
+          name: crossbowaim-jar
+          path: "**/*.jar"
